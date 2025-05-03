@@ -55,7 +55,7 @@ export const fetchAppointments = async (): Promise<Appointment[]> => {
 
 export const createAppointment = async (appointment: Partial<Appointment>): Promise<Appointment> => {
   // Make sure required fields are present
-  if (!appointment.appointment_time || !appointment.phone_number) {
+  if (!appointment.date || !appointment.time || !appointment.patient?.phone) {
     throw new Error("Required appointment fields missing");
   }
   
