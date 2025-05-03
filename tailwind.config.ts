@@ -64,16 +64,22 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				medical: {
-					50: '#f0f9ff',
-					100: '#e0f2fe',
-					200: '#bae6fd',
-					300: '#7dd3fc',
-					400: '#38bdf8',
-					500: '#0ea5e9',
-					600: '#0284c7',
-					700: '#0369a1',
-					800: '#1e40af',
-					900: '#0c4a6e'
+					50: '#e6f7f1',
+					100: '#ccefe3',
+					200: '#99dfc7',
+					300: '#66cfab',
+					400: '#33bf8f',
+					500: '#00af73', // Core green
+					600: '#008c5c',
+					700: '#006945',
+					800: '#00462e',
+					900: '#002317'
+				},
+				core: {
+					green: '#00af73',
+					blue: '#1a4b99',
+					dark: '#333333',
+					light: '#f8f8f8'
 				}
 			},
 			borderRadius: {

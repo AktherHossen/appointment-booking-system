@@ -67,9 +67,9 @@ const Index = () => {
         {renderActiveTab()}
       </main>
       
-      <footer className="bg-medical-800 text-white py-4 mt-8">
+      <footer className="bg-core-dark text-white py-4 mt-8">
         <div className="container text-center text-sm">
-          <p>© {new Date().getFullYear()} Diagnostic Center SMS Management System</p>
+          <p>© {new Date().getFullYear()} Core Diagnostic Ltd. - Touching Lives</p>
         </div>
       </footer>
     </div>

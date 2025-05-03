@@ -1,10 +1,10 @@
-
 import type { Database } from "@/integrations/supabase/types";
 
 export type Doctor = {
   id: number;
   name: string;
-  specialization: string | null;
+  specialization: string;
+  phone?: string;
 };
 
 export type Patient = {

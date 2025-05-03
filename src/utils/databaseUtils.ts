@@ -54,6 +54,11 @@ export const fetchAppointments = async (): Promise<Appointment[]> => {
 };
 
 export const createAppointment = async (appointment: Partial<Appointment>): Promise<Appointment> => {
+  // Make sure required fields are present
+  if (!appointment.appointment_time || !appointment.phone_number) {
+    throw new Error("Required appointment fields missing");
+  }
+  
   const supabaseAppointment = mapToSupabaseAppointment(appointment);
   
   const { data, error } = await supabase
