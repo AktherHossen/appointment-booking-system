@@ -1,6 +1,5 @@
 
-import { useState } from "react";
-import { doctors } from "@/data/mockData";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,10 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Doctor } from "@/types";
 import { useToast } from "@/components/ui/use-toast";
 import { Stethoscope, Plus, Phone } from "lucide-react";
+import { fetchDoctors, addDoctor } from "@/utils/databaseUtils";
 
 const DoctorsList = () => {
   const { toast } = useToast();
-  const [localDoctors, setLocalDoctors] = useState<Doctor[]>(doctors);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newDoctor, setNewDoctor] = useState<{
     name: string;
@@ -23,7 +24,26 @@ const DoctorsList = () => {
     phone: "",
   });
 
-  const handleAddDoctor = () => {
+  useEffect(() => {
+    const loadDoctors = async () => {
+      try {
+        const doctorsData = await fetchDoctors();
+        setDoctors(doctorsData);
+      } catch (error) {
+        toast({
+          title: "Error Loading Doctors",
+          description: "Failed to load doctors from database.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDoctors();
+  }, [toast]);
+
+  const handleAddDoctor = async () => {
     if (!newDoctor.name || !newDoctor.specialization) {
       toast({
         title: "Missing Information",
@@ -33,22 +53,32 @@ const DoctorsList = () => {
       return;
     }
 
-    const doctor: Doctor = {
-      id: `D${Date.now()}`,
-      name: newDoctor.name,
-      specialization: newDoctor.specialization,
-      phone: newDoctor.phone,
-    };
-
-    setLocalDoctors([...localDoctors, doctor]);
-    setNewDoctor({ name: "", specialization: "", phone: "" });
-    setShowAddForm(false);
-    
-    toast({
-      title: "Doctor Added",
-      description: `${doctor.name} has been added successfully.`,
-    });
+    try {
+      const added = await addDoctor({
+        name: newDoctor.name,
+        specialization: newDoctor.specialization,
+      });
+      
+      setDoctors([...doctors, added]);
+      setNewDoctor({ name: "", specialization: "", phone: "" });
+      setShowAddForm(false);
+      
+      toast({
+        title: "Doctor Added",
+        description: `${added.name} has been added successfully.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to Add Doctor",
+        description: "There was an error adding the doctor to the database.",
+        variant: "destructive",
+      });
+    }
   };
+
+  if (loading) {
+    return <div className="text-center py-8">Loading doctors...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -117,31 +147,37 @@ const DoctorsList = () => {
         </Card>
       )}
 
-      <div className="appointment-grid">
-        {localDoctors.map((doctor) => (
-          <Card key={doctor.id} className="card-shadow">
-            <CardHeader className="bg-medical-50 py-4">
-              <CardTitle className="text-lg flex items-center text-medical-800">
-                <Stethoscope className="h-5 w-5 mr-2" />
-                {doctor.name}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-4">
-              <div className="space-y-3">
-                <p className="text-sm text-gray-600">
-                  <strong>Specialization:</strong> {doctor.specialization}
-                </p>
-                {doctor.phone && (
-                  <p className="text-sm text-gray-600 flex items-center">
-                    <Phone className="h-3 w-3 mr-1" />
-                    {doctor.phone}
+      {doctors.length === 0 ? (
+        <div className="text-center py-6">
+          <p className="text-gray-500">No doctors found. Add your first doctor.</p>
+        </div>
+      ) : (
+        <div className="appointment-grid">
+          {doctors.map((doctor) => (
+            <Card key={doctor.id} className="card-shadow">
+              <CardHeader className="bg-medical-50 py-4">
+                <CardTitle className="text-lg flex items-center text-medical-800">
+                  <Stethoscope className="h-5 w-5 mr-2" />
+                  {doctor.name}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600">
+                    <strong>Specialization:</strong> {doctor.specialization || "Not specified"}
                   </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                  {doctor.phone && (
+                    <p className="text-sm text-gray-600 flex items-center">
+                      <Phone className="h-3 w-3 mr-1" />
+                      {doctor.phone}
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { CalendarIcon, Clock, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,12 +10,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { doctors, patients } from "@/data/mockData";
-import { Doctor, Patient, Appointment } from "@/types";
+import { Doctor, Appointment } from "@/types";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 import { formatSMSContent, sendSMS } from "@/utils/smsUtils";
 import { smsTemplates } from "@/data/mockData";
+import { fetchDoctors, createAppointment } from "@/utils/databaseUtils";
 
 type Props = {
   onAppointmentCreated: (appointment: Appointment) => void;
@@ -37,6 +37,28 @@ const AppointmentForm = ({ onAppointmentCreated }: Props) => {
   const [patientPhone, setPatientPhone] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [isCreating, setIsCreating] = useState<boolean>(false);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadDoctors = async () => {
+      try {
+        const doctorsData = await fetchDoctors();
+        setDoctors(doctorsData);
+      } catch (error) {
+        console.error("Error loading doctors:", error);
+        toast({
+          title: "Error Loading Doctors",
+          description: "Failed to load doctors from database.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDoctors();
+  }, [toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,59 +74,39 @@ const AppointmentForm = ({ onAppointmentCreated }: Props) => {
 
     setIsCreating(true);
 
-    // Find or create patient
-    let patient: Patient;
-    const existingPatient = patients.find(p => p.phone === patientPhone);
-    
-    if (existingPatient) {
-      patient = existingPatient;
-    } else {
-      // In a real app, you'd save this to a database
-      patient = {
-        id: `P${Date.now()}`,
-        name: patientName,
-        phone: patientPhone,
-      };
-    }
-
-    const doctor = doctors.find(d => d.id === selectedDoctor);
-    
-    if (!doctor) {
-      toast({
-        title: "Error",
-        description: "Selected doctor not found.",
-        variant: "destructive",
-      });
-      setIsCreating(false);
-      return;
-    }
-
-    const newAppointment: Appointment = {
-      id: `A${Date.now()}`,
-      patientId: patient.id,
-      patient,
-      doctorId: doctor.id,
-      doctor,
-      date: date as Date,
-      time,
-      status: "pending",
-      notes,
-      createdAt: new Date(),
-    };
-
     try {
-      // In a real app, you'd save this to a database
+      const doctorId = parseInt(selectedDoctor);
+      const doctor = doctors.find(d => d.id === doctorId);
+      
+      if (!doctor) {
+        throw new Error("Selected doctor not found");
+      }
+
+      const newAppointment: Partial<Appointment> = {
+        patient: {
+          name: patientName,
+          phone: patientPhone
+        },
+        doctorId,
+        doctor,
+        date: date as Date,
+        time,
+        status: "pending",
+        notes,
+      };
+
+      const createdAppointment = await createAppointment(newAppointment);
       
       // Send confirmation SMS
       const template = smsTemplates.find(t => t.type === "confirmation");
       
-      if (template && patient.phone) {
-        const message = formatSMSContent(template, newAppointment);
-        await sendSMS(patient.phone, message);
+      if (template && patientPhone) {
+        const message = formatSMSContent(template, createdAppointment);
+        await sendSMS(patientPhone, message);
       }
       
       // Notify parent component
-      onAppointmentCreated(newAppointment);
+      onAppointmentCreated(createdAppointment);
       
       // Reset form
       setTime("");
@@ -118,6 +120,7 @@ const AppointmentForm = ({ onAppointmentCreated }: Props) => {
         description: "The appointment has been successfully created and a confirmation SMS has been sent.",
       });
     } catch (error) {
+      console.error("Error creating appointment:", error);
       toast({
         title: "Error",
         description: "Failed to create appointment. Please try again.",
@@ -127,6 +130,19 @@ const AppointmentForm = ({ onAppointmentCreated }: Props) => {
       setIsCreating(false);
     }
   };
+
+  if (loading) {
+    return (
+      <Card className="shadow-md">
+        <CardHeader className="bg-medical-800 text-white">
+          <CardTitle>Loading...</CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 text-center">
+          Loading doctors data...
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="shadow-md">
@@ -186,14 +202,17 @@ const AppointmentForm = ({ onAppointmentCreated }: Props) => {
 
           <div className="space-y-2">
             <Label htmlFor="doctor">Doctor</Label>
-            <Select value={selectedDoctor} onValueChange={setSelectedDoctor}>
+            <Select 
+              value={selectedDoctor ? selectedDoctor.toString() : ""} 
+              onValueChange={setSelectedDoctor}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select doctor" />
               </SelectTrigger>
               <SelectContent>
                 {doctors.map((doctor) => (
-                  <SelectItem key={doctor.id} value={doctor.id}>
-                    {doctor.name} - {doctor.specialization}
+                  <SelectItem key={doctor.id} value={doctor.id.toString()}>
+                    {doctor.name} - {doctor.specialization || "Not specified"}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -1,6 +1,5 @@
 
-import { useState } from "react";
-import { appointments } from "@/data/mockData";
+import { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import AppointmentsList from "@/components/AppointmentsList";
 import AppointmentForm from "@/components/AppointmentForm";
@@ -8,13 +7,32 @@ import DoctorsList from "@/components/DoctorsList";
 import SMSTemplates from "@/components/SMSTemplates";
 import Settings from "@/components/Settings";
 import { Appointment } from "@/types";
+import { fetchAppointments } from "@/utils/databaseUtils";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<string>("appointments");
-  const [localAppointments, setLocalAppointments] = useState<Appointment[]>(appointments);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadAppointments = async () => {
+      if (activeTab === "appointments") {
+        try {
+          const data = await fetchAppointments();
+          setAppointments(data);
+        } catch (error) {
+          console.error("Error loading appointments:", error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadAppointments();
+  }, [activeTab]);
 
   const handleAppointmentCreated = (appointment: Appointment) => {
-    setLocalAppointments([...localAppointments, appointment]);
+    setAppointments([...appointments, appointment]);
   };
 
   const renderActiveTab = () => {

@@ -1,15 +1,15 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Appointment } from "@/types";
 import { format } from "date-fns";
 import { Calendar, Clock, User, Stethoscope, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { appointments } from "@/data/mockData";
 import { formatSMSContent, sendSMS } from "@/utils/smsUtils";
-import { smsTemplates } from "@/data/mockData";
+import { smsTemplates } from "@/data/mockData"; // Keep templates from mock data for now
 import { toast } from "@/components/ui/use-toast";
+import { fetchAppointments, updateAppointmentStatus } from "@/utils/databaseUtils";
 
 const getStatusStyle = (status: string) => {
   switch (status) {
@@ -25,33 +25,75 @@ const getStatusStyle = (status: string) => {
 };
 
 const AppointmentsList = () => {
-  const [localAppointments, setLocalAppointments] = useState<Appointment[]>(appointments);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState<{[key: string]: boolean}>({});
-
-  const handleStatusChange = async (id: string, newStatus: "confirmed" | "pending" | "cancelled") => {
-    // Update local state
-    const updatedAppointments = localAppointments.map(appointment => {
-      if (appointment.id === id) {
-        const updated = { ...appointment, status: newStatus };
-        
-        // Find the appropriate template
-        const templateType = 
-          newStatus === "confirmed" ? "confirmation" : 
-          newStatus === "cancelled" ? "cancellation" : "reminder";
-        
-        const template = smsTemplates.find(t => t.type === templateType);
-        
-        // If template exists, send SMS
-        if (template) {
-          sendStatusSMS(updated, template.id);
-        }
-        
-        return updated;
+  
+  useEffect(() => {
+    const loadAppointments = async () => {
+      try {
+        const data = await fetchAppointments();
+        setAppointments(data);
+      } catch (error) {
+        console.error("Error loading appointments:", error);
+        toast({
+          title: "Error Loading Appointments",
+          description: "Failed to load appointments from database.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
       }
-      return appointment;
-    });
-    
-    setLocalAppointments(updatedAppointments);
+    };
+
+    loadAppointments();
+  }, []);
+
+  const handleStatusChange = async (id: number, newStatus: "confirmed" | "pending" | "cancelled") => {
+    try {
+      setSending(prev => ({ ...prev, [id]: true }));
+      
+      // Update in database
+      await updateAppointmentStatus(id, newStatus);
+      
+      // Update local state
+      const updatedAppointments = appointments.map(appointment => {
+        if (appointment.id === id) {
+          const updated = { ...appointment, status: newStatus };
+          
+          // Find the appropriate template
+          const templateType = 
+            newStatus === "confirmed" ? "confirmation" : 
+            newStatus === "cancelled" ? "cancellation" : "reminder";
+          
+          const template = smsTemplates.find(t => t.type === templateType);
+          
+          // If template exists, send SMS
+          if (template) {
+            sendStatusSMS(updated, template.id);
+          }
+          
+          return updated;
+        }
+        return appointment;
+      });
+      
+      setAppointments(updatedAppointments);
+      
+      toast({
+        title: "Status Updated",
+        description: `Appointment status changed to ${newStatus}.`,
+      });
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update appointment status.",
+        variant: "destructive",
+      });
+    } finally {
+      setSending(prev => ({ ...prev, [id]: false }));
+    }
   };
 
   const handleSendReminder = async (appointment: Appointment) => {
@@ -94,8 +136,12 @@ const AppointmentsList = () => {
     }
   };
 
+  if (loading) {
+    return <div className="text-center py-8">Loading appointments...</div>;
+  }
+
   // Sort appointments by date
-  const sortedAppointments = [...localAppointments].sort((a, b) => 
+  const sortedAppointments = [...appointments].sort((a, b) => 
     new Date(a.date).getTime() - new Date(b.date).getTime()
   );
   
@@ -103,7 +149,7 @@ const AppointmentsList = () => {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-medical-800">Appointments</h2>
       
-      {localAppointments.length === 0 ? (
+      {appointments.length === 0 ? (
         <div className="text-center py-10">
           <p className="text-lg text-gray-500">No appointments found</p>
         </div>
@@ -135,10 +181,12 @@ const AppointmentsList = () => {
                     <User className="h-4 w-4 mr-2 text-medical-600" />
                     <span>{appointment.patient.name} ({appointment.patient.phone})</span>
                   </div>
-                  <div className="flex items-center text-sm">
-                    <Stethoscope className="h-4 w-4 mr-2 text-medical-600" />
-                    <span>{appointment.doctor.name} - {appointment.doctor.specialization}</span>
-                  </div>
+                  {appointment.doctor && (
+                    <div className="flex items-center text-sm">
+                      <Stethoscope className="h-4 w-4 mr-2 text-medical-600" />
+                      <span>{appointment.doctor.name} - {appointment.doctor.specialization}</span>
+                    </div>
+                  )}
                   {appointment.notes && (
                     <div className="flex items-start text-sm">
                       <FileText className="h-4 w-4 mr-2 mt-0.5 text-medical-600" />
