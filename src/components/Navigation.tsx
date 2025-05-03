@@ -52,20 +52,14 @@ const Navigation = ({ activeTab, setActiveTab }: {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  // Core Diagnostic Center Logo SVG
+  // Core Diagnostic Center Logo
   const CoreLogo = () => (
     <div className="flex items-center">
-      <div className="mr-2">
-        <svg width="40" height="40" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M100 20C55.8 20 20 55.8 20 100C20 144.2 55.8 180 100 180C144.2 180 180 144.2 180 100C180 55.8 144.2 20 100 20Z" fill="#00af73" />
-          <path d="M100 30C61.3 30 30 61.3 30 100C30 138.7 61.3 170 100 170C138.7 170 170 138.7 170 100C170 61.3 138.7 30 100 30ZM100 160C66.9 160 40 133.1 40 100C40 66.9 66.9 40 100 40C133.1 40 160 66.9 160 100C160 133.1 133.1 160 100 160Z" fill="#00af73" />
-          <path d="M80 70C80 70 60 90 60 120C60 120 80 110 100 140C100 140 120 110 140 120C140 120 140 90 120 70C120 70 100 65 80 70Z" fill="#1a4b99" />
-        </svg>
-      </div>
-      <div className="flex flex-col items-start">
-        <span className="font-bold text-core-dark text-xl">CORE</span>
-        <span className="text-xs tracking-wider text-core-dark">DIAGNOSTIC LTD</span>
-      </div>
+      <img 
+        src="/public/lovable-uploads/f9df85d2-dc5f-44ef-852d-aef6eb82fe78.png" 
+        alt="Core Diagnostic Ltd Logo" 
+        className="h-10 mr-2" 
+      />
     </div>
   );
 

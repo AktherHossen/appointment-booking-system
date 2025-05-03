@@ -68,8 +68,15 @@ const Index = () => {
       </main>
       
       <footer className="bg-core-dark text-white py-4 mt-8">
-        <div className="container text-center text-sm">
-          <p>© {new Date().getFullYear()} Core Diagnostic Ltd. - Touching Lives</p>
+        <div className="container text-center">
+          <p className="text-sm">© {new Date().getFullYear()} Core Diagnostic Ltd. - Touching Lives</p>
+          <div className="mt-2 flex justify-center">
+            <img 
+              src="/public/lovable-uploads/f9df85d2-dc5f-44ef-852d-aef6eb82fe78.png" 
+              alt="Core Diagnostic Ltd Logo" 
+              className="h-8" 
+            />
+          </div>
         </div>
       </footer>
     </div>

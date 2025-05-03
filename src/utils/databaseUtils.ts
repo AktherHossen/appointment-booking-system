@@ -61,6 +61,18 @@ export const createAppointment = async (appointment: Partial<Appointment>): Prom
   
   const supabaseAppointment = mapToSupabaseAppointment(appointment);
   
+  // Make sure appointment_time is set (required by Supabase)
+  if (!supabaseAppointment.appointment_time) {
+    // Create appointment_time from date and time
+    const dateObj = appointment.date;
+    supabaseAppointment.appointment_time = dateObj?.toISOString() || new Date().toISOString();
+  }
+  
+  // Make sure phone_number is set (required by Supabase)
+  if (!supabaseAppointment.phone_number && appointment.patient?.phone) {
+    supabaseAppointment.phone_number = appointment.patient.phone;
+  }
+  
   const { data, error } = await supabase
     .from("appointments")
     .insert(supabaseAppointment)
