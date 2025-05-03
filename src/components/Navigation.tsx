@@ -58,7 +58,7 @@ const Navigation = ({ activeTab, setActiveTab }: {
       <img 
         src="/public/lovable-uploads/f9df85d2-dc5f-44ef-852d-aef6eb82fe78.png" 
         alt="Core Diagnostic Ltd Logo" 
-        className="h-10 mr-2" 
+        className="h-14 mr-2" 
       />
     </div>
   );
