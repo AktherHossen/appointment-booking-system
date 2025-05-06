@@ -6,30 +6,67 @@ import AppointmentForm from "@/components/AppointmentForm";
 import DoctorsList from "@/components/DoctorsList";
 import SMSTemplates from "@/components/SMSTemplates";
 import Settings from "@/components/Settings";
+import BulkSMSNotification from "@/components/BulkSMSNotification";
 import { Appointment } from "@/types";
 import { fetchAppointments } from "@/utils/databaseUtils";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<string>("appointments");
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string>("receptionist");
+  const { toast } = useToast();
 
   useEffect(() => {
-    const loadAppointments = async () => {
-      if (activeTab === "appointments") {
-        try {
-          const data = await fetchAppointments();
-          setAppointments(data);
-        } catch (error) {
-          console.error("Error loading appointments:", error);
-        } finally {
-          setLoading(false);
+    const fetchUserDataAndAppointments = async () => {
+      try {
+        // Get current user session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          // Fetch user role
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('role')
+            .eq('username', session.user.email)
+            .single();
+          
+          if (userError) {
+            console.error("Error fetching user role:", userError);
+            toast({
+              title: "Error",
+              description: "Failed to fetch user role",
+              variant: "destructive"
+            });
+          } else if (userData) {
+            setUserRole(userData.role);
+          }
+          
+          // Fetch appointments
+          if (activeTab === "appointments") {
+            const data = await fetchAppointments();
+            setAppointments(data);
+          }
+        } else {
+          // Not logged in, redirect to login
+          window.location.href = '/login';
         }
+      } catch (error) {
+        console.error("Error in data fetching:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load data",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
       }
     };
 
-    loadAppointments();
-  }, [activeTab]);
+    fetchUserDataAndAppointments();
+  }, [activeTab, toast]);
 
   const handleAppointmentCreated = (appointment: Appointment) => {
     setAppointments([...appointments, appointment]);
@@ -43,8 +80,11 @@ const Index = () => {
             <div className="md:col-span-2">
               <AppointmentsList />
             </div>
-            <div>
+            <div className="space-y-6">
               <AppointmentForm onAppointmentCreated={handleAppointmentCreated} />
+              {userRole === "receptionist" && (
+                <BulkSMSNotification />
+              )}
             </div>
           </div>
         );
@@ -64,7 +104,7 @@ const Index = () => {
       <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
       
       <main className="container py-6">
-        {renderActiveTab()}
+        {loading ? <div className="text-center py-8">Loading...</div> : renderActiveTab()}
       </main>
       
       <footer className="bg-core-dark text-white py-4 mt-8">
