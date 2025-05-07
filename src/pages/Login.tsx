@@ -21,6 +21,12 @@ const Login = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Test credentials
+  const testCredentials = {
+    admin: { username: "admin@core.com", password: "admin123" },
+    receptionist: { username: "reception@core.com", password: "reception123" }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -96,6 +102,16 @@ const Login = () => {
     });
   };
 
+  const useTestCredentials = () => {
+    const credentials = selectedRole === 'admin' ? testCredentials.admin : testCredentials.receptionist;
+    setEmail(credentials.username);
+    setPassword(credentials.password);
+    toast({
+      title: "Test Credentials Applied",
+      description: `Login with ${selectedRole} test account. Click login to continue.`
+    });
+  };
+
   // Filter users based on selected role
   const filteredUsers = availableUsers.filter(user => 
     !selectedRole || user.role === selectedRole
@@ -167,14 +183,25 @@ const Login = () => {
           </form>
           
           <div className="mt-6 pt-4 border-t border-gray-200">
-            <Button 
-              variant="outline" 
-              type="button" 
-              className="w-full text-gray-500" 
-              onClick={fetchAvailableUsers}
-            >
-              {showUsers ? "Hide Available Users" : "Show Available Users"}
-            </Button>
+            <div className="space-y-3">
+              <Button 
+                variant="outline" 
+                type="button" 
+                className="w-full bg-green-50 text-green-700 border-green-200 hover:bg-green-100" 
+                onClick={useTestCredentials}
+              >
+                Use Test {selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)} Credentials
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                type="button" 
+                className="w-full text-gray-500" 
+                onClick={fetchAvailableUsers}
+              >
+                {showUsers ? "Hide Available Users" : "Show Available Users"}
+              </Button>
+            </div>
             
             {showUsers && filteredUsers.length > 0 && (
               <div className="mt-4 border rounded-md p-3">
