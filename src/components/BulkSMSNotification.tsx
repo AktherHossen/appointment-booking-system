@@ -147,14 +147,14 @@ const BulkSMSNotification = () => {
         <div className="space-y-2">
           <Label>Filter by Doctor</Label>
           <Select 
-            value={selectedDoctor || ""} 
-            onValueChange={(value) => setSelectedDoctor(value || null)}
+            value={selectedDoctor || "all"} 
+            onValueChange={(value) => setSelectedDoctor(value === "all" ? null : value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select a doctor" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Doctors</SelectItem>
+              <SelectItem value="all">All Doctors</SelectItem>
               {doctors.map((doctor) => (
                 <SelectItem key={doctor.id} value={doctor.id.toString()}>
                   {doctor.name}

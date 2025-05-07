@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { CalendarIcon, Clock, Plus } from "lucide-react";
@@ -154,6 +153,7 @@ const AppointmentForm = ({ onAppointmentCreated }: Props) => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+          {/* Date picker */}
           <div className="space-y-2">
             <Label htmlFor="date">Date</Label>
             <Popover>
