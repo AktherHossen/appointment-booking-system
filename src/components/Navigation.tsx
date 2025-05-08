@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -12,8 +11,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { signOut } from "@/utils/authUtils";
 
 type NavItem = {
   label: string;
@@ -33,48 +32,16 @@ const Navigation = ({ activeTab, setActiveTab }: {
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchUserSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user || null);
-      
-      if (session?.user) {
-        // Fetch user role from the users table
-        const { data, error } = await supabase
-          .from('users')
-          .select('role')
-          .eq('username', session.user.email)
-          .single();
-        
-        if (data) {
-          setUserRole(data.role);
-        }
+    // Get user from localStorage
+    const userData = localStorage.getItem('user');
+    const userRoleData = localStorage.getItem('userRole');
+    
+    if (userData) {
+      setUser(JSON.parse(userData));
+      if (userRoleData) {
+        setUserRole(userRoleData);
       }
-    };
-
-    fetchUserSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user || null);
-        
-        if (session?.user) {
-          // Fetch user role when auth state changes
-          setTimeout(async () => {
-            const { data } = await supabase
-              .from('users')
-              .select('role')
-              .eq('username', session.user.email)
-              .single();
-            
-            if (data) {
-              setUserRole(data.role);
-            }
-          }, 0);
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
+    }
   }, []);
 
   const navItems: NavItem[] = [
@@ -114,7 +81,7 @@ const Navigation = ({ activeTab, setActiveTab }: {
   };
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await signOut();
     if (error) {
       toast({
         title: "Error signing out",

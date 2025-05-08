@@ -27,12 +27,40 @@ export const isAdmin = async (email: string): Promise<boolean> => {
 };
 
 export const signInWithEmail = async (email: string, password: string) => {
-  return await supabase.auth.signInWithPassword({
-    email,
-    password
-  });
+  // First, check if credentials match in our custom users table
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('username', email)
+    .eq('password', password)
+    .single();
+  
+  if (error || !data) {
+    return { 
+      data: { user: null }, 
+      error: { message: 'Invalid email or password' } 
+    };
+  }
+
+  // If credentials are valid, create a session
+  // Since we're not using Supabase Auth but our custom table,
+  // we'll simulate a user object
+  return { 
+    data: { 
+      user: { 
+        email: data.username,
+        id: data.id.toString(),
+        user_metadata: { role: data.role }
+      } 
+    }, 
+    error: null 
+  };
 };
 
 export const signOut = async () => {
-  return await supabase.auth.signOut();
+  // Since we're using a custom authentication system,
+  // we just need to clear any session data from localStorage
+  localStorage.removeItem('user');
+  localStorage.removeItem('userRole');
+  return { error: null };
 };

@@ -46,6 +46,10 @@ const Login = () => {
           console.error("Error fetching user role:", userError);
         }
 
+        // Store user in localStorage
+        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('userRole', userData?.role || 'receptionist');
+
         // Redirect based on role
         navigate('/');
         toast({
