@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import AppointmentsList from "@/components/AppointmentsList";
@@ -6,6 +7,7 @@ import DoctorsList from "@/components/DoctorsList";
 import SMSTemplates from "@/components/SMSTemplates";
 import Settings from "@/components/Settings";
 import BulkSMSNotification from "@/components/BulkSMSNotification";
+import PatientPhoneList from "@/components/PatientPhoneList";
 import { Appointment } from "@/types";
 import { fetchAppointments } from "@/utils/databaseUtils";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,7 +85,12 @@ const Index = () => {
       case "templates":
         return <SMSTemplates />;
       case "settings":
-        return <Settings />;
+        return (
+          <div className="space-y-6">
+            <Settings />
+            {userRole === "admin" && <PatientPhoneList />}
+          </div>
+        );
       default:
         return <div>Page not found</div>;
     }
