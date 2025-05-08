@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { format } from "date-fns";
 import { Download, Search } from "lucide-react";
@@ -186,7 +185,7 @@ const PatientPhoneList = () => {
                 <SelectValue placeholder="Select month" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All months</SelectItem>
+                <SelectItem value="all">All months</SelectItem>
                 {months.map(m => (
                   <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
                 ))}
