@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import AppointmentsList from "@/components/AppointmentsList";
@@ -11,6 +10,7 @@ import { Appointment } from "@/types";
 import { fetchAppointments } from "@/utils/databaseUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<string>("appointments");
@@ -18,30 +18,20 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string>("receptionist");
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserDataAndAppointments = async () => {
       try {
-        // Get current user session
-        const { data: { session } } = await supabase.auth.getSession();
+        // Get user from localStorage
+        const userData = localStorage.getItem('user');
+        const userRoleData = localStorage.getItem('userRole');
         
-        if (session?.user) {
-          // Fetch user role
-          const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('role')
-            .eq('username', session.user.email)
-            .single();
+        if (userData) {
+          const user = JSON.parse(userData);
           
-          if (userError) {
-            console.error("Error fetching user role:", userError);
-            toast({
-              title: "Error",
-              description: "Failed to fetch user role",
-              variant: "destructive"
-            });
-          } else if (userData) {
-            setUserRole(userData.role);
+          if (userRoleData) {
+            setUserRole(userRoleData);
           }
           
           // Fetch appointments
@@ -51,7 +41,7 @@ const Index = () => {
           }
         } else {
           // Not logged in, redirect to login
-          window.location.href = '/login';
+          navigate('/login');
         }
       } catch (error) {
         console.error("Error in data fetching:", error);
@@ -66,7 +56,7 @@ const Index = () => {
     };
 
     fetchUserDataAndAppointments();
-  }, [activeTab, toast]);
+  }, [activeTab, toast, navigate]);
 
   const handleAppointmentCreated = (appointment: Appointment) => {
     setAppointments([...appointments, appointment]);

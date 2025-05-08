@@ -50,12 +50,14 @@ const Login = () => {
         localStorage.setItem('user', JSON.stringify(data.user));
         localStorage.setItem('userRole', userData?.role || 'receptionist');
 
-        // Redirect based on role
-        navigate('/');
+        // Show success toast
         toast({
           title: "Login Successful",
           description: `Welcome back, ${userData?.role || "user"}!`
         });
+        
+        // Force a page reload to ensure App.tsx picks up the user from localStorage
+        window.location.href = '/';
       }
     } catch (error: any) {
       toast({
