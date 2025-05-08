@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { format } from "date-fns";
 import { Download, Search } from "lucide-react";
@@ -31,6 +32,11 @@ const years = Array.from({ length: 6 }, (_, i) => {
   const year = currentYear - i;
   return { value: year.toString(), label: year.toString() };
 });
+
+// Type declaration for Navigator with msSaveBlob for TypeScript compatibility
+interface NavigatorWithMsSaveBlob extends Navigator {
+  msSaveBlob?: (blob: Blob, defaultName?: string) => boolean;
+}
 
 const PatientPhoneList = () => {
   const [month, setMonth] = useState<string>("");
@@ -130,15 +136,18 @@ const PatientPhoneList = () => {
 
       // Download CSV file
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
       const fileName = `patient_appointments_${month ? months.find(m => m.value === month)?.label + '_' : ''}${year}.csv`;
       
-      if (navigator.msSaveBlob) {
+      // Cast navigator to our extended interface
+      const navigatorWithMsSaveBlob = navigator as NavigatorWithMsSaveBlob;
+      
+      if (navigatorWithMsSaveBlob.msSaveBlob) {
         // IE 10+
-        navigator.msSaveBlob(blob, fileName);
+        navigatorWithMsSaveBlob.msSaveBlob(blob, fileName);
       } else {
         // Other browsers
         const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
         link.href = url;
         link.setAttribute('download', fileName);
         document.body.appendChild(link);
