@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Calendar, Printer, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ const PrintDailyAppointments = () => {
   const { toast } = useToast();
 
   // Fetch doctors on component mount
-  useState(() => {
+  useEffect(() => {
     fetchDoctors();
   }, []);
 
@@ -72,7 +72,7 @@ const PrintDailyAppointments = () => {
       
       // Add doctor filter if a specific doctor is selected
       if (selectedDoctorId !== "all") {
-        query = query.eq('doctor_id', selectedDoctorId);
+        query = query.eq('doctor_id', parseInt(selectedDoctorId));
       }
       
       const { data, error } = await query;
@@ -82,22 +82,26 @@ const PrintDailyAppointments = () => {
       }
 
       // Map the data to our Appointment type
-      const mappedAppointments = (data || []).map(appointment => {
+      const mappedAppointments: Appointment[] = (data || []).map(appointment => {
+        const appointmentDate = new Date(appointment.appointment_time);
         return {
           id: appointment.id,
-          date: new Date(appointment.appointment_time),
-          time: format(new Date(appointment.appointment_time), 'HH:mm'),
-          status: appointment.status,
+          patientId: undefined,
+          doctorId: appointment.doctor_id,
+          date: appointmentDate,
+          time: format(appointmentDate, 'HH:mm'),
+          status: (appointment.status || "pending") as "pending" | "confirmed" | "cancelled",
           patient: {
-            name: appointment.patient_name,
+            name: appointment.patient_name || "",
             phone: appointment.phone_number
           },
           doctor: appointment.doctors ? {
             id: appointment.doctors.id,
             name: appointment.doctors.name,
-            specialization: appointment.doctors.specialization
+            specialization: appointment.doctors.specialization || ""
           } : undefined,
-          notes: ''
+          notes: "",
+          createdAt: new Date()
         };
       });
 
