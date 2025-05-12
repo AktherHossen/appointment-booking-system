@@ -11,8 +11,7 @@ import PatientPhoneList from "@/components/PatientPhoneList";
 import PrintDailyAppointments from "@/components/PrintDailyAppointments";
 import { Appointment } from "@/types";
 import { fetchAppointments } from "@/utils/databaseUtils";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
