@@ -8,6 +8,7 @@ import SMSTemplates from "@/components/SMSTemplates";
 import Settings from "@/components/Settings";
 import BulkSMSNotification from "@/components/BulkSMSNotification";
 import PatientPhoneList from "@/components/PatientPhoneList";
+import PrintDailyAppointments from "@/components/PrintDailyAppointments";
 import { Appointment } from "@/types";
 import { fetchAppointments } from "@/utils/databaseUtils";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,7 +76,10 @@ const Index = () => {
             <div className="space-y-6">
               <AppointmentForm onAppointmentCreated={handleAppointmentCreated} />
               {userRole === "receptionist" && (
-                <BulkSMSNotification />
+                <>
+                  <BulkSMSNotification />
+                  <PrintDailyAppointments />
+                </>
               )}
             </div>
           </div>
